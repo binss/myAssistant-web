@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>myAssitant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Charisma, a fully featured, responsive, HTML5, Bootstrap admin template.">
+    <meta name="author" content="Muhammad Usman">
+
+    <!-- The styles -->
+    <link id="bs-css" href="static/css/bootstrap-cerulean.min.css" rel="stylesheet">
+    <link href="static/css/charisma-app.css" rel="stylesheet">
+
+    <link href='static/css/fullcalendar.css' rel='stylesheet'>
+    <link href='static/css/fullcalendar.print.css' rel='stylesheet' media='print'>
+    <link href='static/css/responsive-tables.css' rel='stylesheet'>
+    <link href="static/css/bootstrap-datetimepicker.css" rel="stylesheet" media="screen">
+
+</head>
+
+<body>
+
+<div class="ch-container">
+    <div class="row">
+        <h1 style="text-align:center">个人移动助理</h1>
+    </div>
+        <div class="row" id="recentReminder" style="float:right">
+        <h4 id="recentDisplay" style="float:left">最近日程提醒: </h4>
+        <h4 id="recentTimer" style="float:left"></h4>
+        <h4 id="recentDisplay2" style="float:left">之后提醒～</h4>
+
+    </div>
+    <div class="row">
+        <div class="box col-md-12">
+            <div class="box-inner">
+                <div class="box-header well" data-original-title="">
+                    <h2><i class="glyphicon glyphicon-calendar"></i> 日程</h2>
+
+                    <div class="box-icon">
+                        <a href="#" class="btn btn-adding btn-round btn-default"><i
+                                class="glyphicon glyphicon-plus"></i></a>
+                    </div>
+                </div>
+                <div class="box-content">
+
+
+                    <div id="calendar"></div>
+                    <div class="clearfix"></div>
+                </div>
+            </div>
+        </div>
+    </div><!--/row-->
+    <!-- content ends -->
+</div><!--/#content.col-md-0-->
+</div><!--/fluid-row-->
+
+
+    <hr>
+
+
+    <div class="modal fade" id="addRecordModal" tabindex="-1" role="dialog" aria-labelledby="addRecordModal"
+         aria-hidden="true">
+
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h3>增加新日程</h3>
+                </div>
+                <div class="modal-body">
+                        <h4>日期：</h4>
+                        <div class="input-group date form_datetime">
+                            <input id="createRecordDate" class="form-control" size="16" type="text" value="" readonly>
+                            <span class="input-group-addon"><span class="glyphicon glyphicon-time"></span></span>
+                        </div>
+                        <h4>内容：</h4>
+                        <textarea id="createRecordContent" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">放弃</button>
+                    <button type="button" class="btn btn-primary" id="createRecordBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="dayModal" tabindex="-1" role="dialog" aria-labelledby="dayModal"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">×</button>
+                    <h3 id="dayModalTitle">日期</h3>
+                </div>
+                <div class="modal-body" id="dayModelBody">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!--/.fluid-container-->
+<footer>
+    <div class="bin-footer">
+      <p>Designed by bin with bootstrap</p>
+      <p>blog：<a href="http://www.binsite.me/" target="_blank" >http://www.binsite.me/</a></p>
+      <p>
+        <a href="#">Back to top</a>
+      </p>
+    </div>
+</footer>
+</body>
+
+
+
+<!-- external javascript -->
+<!-- jQuery -->
+<script src="static/js/jquery.min.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
+<!-- calender plugin -->
+<script src='static/js/moment.min.js'></script>
+<script src='static/js/fullcalendar.min.js'></script>
+<!-- data table plugin -->
+<script src='static/js/jquery.dataTables.min.js'></script>
+<script src="static/js/bootstrap-datetimepicker.js"></script>
+
+
+<script type="text/javascript">
+    {% autoescape off %}
+    var displayRecordList = {{ displayRecordList }};
+    {% endautoescape %}
+    var time_distance = 0;
+    var timer;
+
+    $.ajaxSetup({
+        dataType: "json",
+    });
+
+
+    function setDisplay()
+    {
+        var currentDate = new Date();
+        var maxDate = new Date("01 01 2100 00:00");
+        var recentlyDate = maxDate;
+        var recentlyDateIndex;
+        $.each(displayRecordList,function(index,obj){
+            date = new Date(obj.format);
+            if(date > currentDate && date <= recentlyDate)
+            {
+                recentlyDate = date;
+                recentlyDateIndex = index;
+            }
+        });
+        if(recentlyDate == maxDate)
+        {
+            $("#recentDisplay2").text("暂无");
+        }
+        else
+        {
+            time_distance = Math.floor((recentlyDate - currentDate) / 1000);
+            $("#recentDisplay").text("最近日程提醒：" + displayRecordList[recentlyDateIndex].date + " " + displayRecordList[recentlyDateIndex].time +" 内容："+displayRecordList[recentlyDateIndex].title + " 将在 ");
+            $("#recentDisplay2").text("之后提醒～");
+            timer = setInterval("update_timer()",1000);
+            // alert(recentlyDate - currentDate);
+        }
+    }
+    setDisplay();
+
+    function update_timer()
+    {
+        function checkTime(i)    
+        {    
+           if (i < 10) {    
+               i = "0" + i;    
+            }    
+           return i;    
+        }
+        time_distance --;
+        if( time_distance == 0 )
+        {
+            clearInterval(timer);
+            alert("您设定的日程时间已到，请注意！");
+            window.location.replace("/");
+        }
+        // alert(time_distance);
+        var hour = checkTime(parseInt(time_distance/60/60));
+        var minute = checkTime(parseInt(time_distance/60%60));
+        var second = checkTime(parseInt(time_distance%60));
+        $("#recentTimer").text(hour + ":" + minute + ":" + second);
+    }
+
+
+  $(".form_datetime").datetimepicker({
+        format: "yyyy-mm-dd hh:ii",
+        weekStart: 1,
+        todayBtn:  1,
+        autoclose: 1,
+        todayHighlight: 1,
+        startView: 2,
+        forceParse: 0,
+        showMeridian: 1
+    });
+
+
+
+    $('.datatable').dataTable({
+        "sDom": "<'row'<'col-md-6'l><'col-md-6'f>r>t<'row'<'col-md-12'i><'col-md-12 center-block'p>>",
+        "sPaginationType": "bootstrap",
+        "oLanguage": {
+            "sLengthMenu": "_MENU_ records per page"
+        }
+    });
+
+    $('.btn-adding').click(function (e) {
+        // e.preventDefault();
+        // $('#myModal').modal('show');
+        $('#addRecordModal').modal('show');
+        
+    });
+
+    $('#saveBtn').click(function (e) {
+        var children = $("#dayModelBody").children('.row');
+        var modifyList = []
+        var delectList = []
+        $.each(children, function(){
+            if($(this).find('select').val() == "修改")
+                modifyList.push($(this).find('.recordID').attr("recordID") + '-split-' + $(this).find('.form_datetime').val() + '-split-' + $(this).find('.recordContent').val());
+            if($(this).find('select').val() == "删除")
+                delectList.push($(this).find('.recordID').attr("recordID"));
+        });
+
+        // alert(modifyList[0].content);
+
+        $.post("/update/", { "modifyList": modifyList, "delectList": delectList, "operationType":"M"},
+          function(data){
+            if(data.state == '1')
+            {
+              publish_state = true;
+              alert("修改成功！");
+              window.location.replace("/");
+            }
+          });
+    });
+
+    $('#createRecordBtn').click(function (e) {
+
+        var createRecordDate = $("#createRecordDate").val();
+        if(!createRecordDate)
+        {
+            alert("请选择日期和时间！");
+            return;
+        }
+        var createRecordContent = $("#createRecordContent").val();
+        if(!createRecordContent)
+        {
+            alert("请输入日程内容！");
+            return;
+        }
+
+        $.post("/update/", { "date": createRecordDate, "content": createRecordContent, "operationType":"A"},
+          function(data){
+            if(data.state == '1')
+            {
+              publish_state = true;
+              alert("新增成功！");
+              window.location.replace("/");
+            }
+          });
+
+
+    });
+
+
+
+    $('#calendar').fullCalendar({
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay'
+        },
+        dayClick: function(date, jsEvent, view) {
+            // alert('Clicked on: ' + date.format());
+            var clickDay = date.format();
+            $('#dayModalTitle').text(clickDay + "日程");
+            $("#dayModelBody").children().remove();
+
+            $.each(displayRecordList, function(index, obj){
+                if( obj.date == clickDay)
+                {
+                    var hhh = '<div class="row"><div class="col-sm-3"><input size="16" type="text" value="'+ obj.time + '" readonly class="form-control form_datetime"></div><div class="col-sm-7"><input type="text" class="form-control recordContent" value="'+ obj.title +'"></div><div class="col-sm-2"><select class="form-control projectStatus_show" id="operation"><option class="activeOption">无</option><option>修改</option><option>删除</option></select></div><div id="dtp_input3" value=""><div class="recordID" recordID="' + obj.id +'"></div></div></div><br>'
+                    $("#dayModelBody").append(hhh);
+                }
+            });
+
+            $(".form_datetime").datetimepicker({
+                format: 'hh:ii',
+                weekStart: 1, 
+                todayBtn:  1,
+                autoclose: 1,
+                todayHighlight: 1,
+                startView: 1,
+                minView: 0,
+                maxView: 1,
+                forceParse: 0});
+
+            if($("#dayModelBody").children().length)
+            {
+                $('#dayModal').modal('show');
+            }
+
+        },
+        defaultDate: "{{currentMonth}}",
+        events: displayRecordList
+    });
+</script>
+</html>
